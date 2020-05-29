@@ -1,6 +1,5 @@
 import numpy as np
 import gym
-import random
 from geneticalgorithm import geneticalgorithm as ga
 
 ENV_NAME = 'CartPole-v0'
@@ -17,6 +16,11 @@ def to_action(x):
         return 1
 
 def GA_model(algorithm_param):
+    """
+    Simple genetic algorithm model based on the geneticalgorithm library
+    (https://pypi.org/project/geneticalgorithm/)
+    """
+
     def fitness_func(gene, render=False):
         rewards = []
         episodes = 3
@@ -25,10 +29,11 @@ def GA_model(algorithm_param):
             for _ in range(goal_steps):
                 if render:
                     env.render()
+                # Perform logistic regression function here
+                # to get either a 0 (left) or 1 (right) action
                 weights = gene
                 a = sigmoid(observation.dot(weights.T))
-                pred = to_action(a)
-                action = int(pred)
+                action = int(to_action(a))
                 observation, reward, done, info = env.step(action)
                 rewards.append(reward)
                 if done:
@@ -50,10 +55,17 @@ def GA_model(algorithm_param):
     return weights
 
 def GA_model_predict(observation, weights):
+    """
+    Prediction function based on logstics regression function
+    """
     a = sigmoid(observation.dot(weights.T))
     pred = to_action(a)
     pred = int(pred)
     return pred
+
+#####################################################################
+# Main
+#####################################################################
 
 goal_steps = 500
 
@@ -67,29 +79,24 @@ algorithm_param = {'max_num_iteration': 10,
                    'max_iteration_without_improv': 3000}
 
 weights = GA_model(algorithm_param)
-
 print('Weights: {}'.format(weights))
 
-scores, choices = [], []
+scores = []
 episodes = 10
-for each_game in range(episodes):
+for episode in range(episodes):
     score = 0
-    env.reset()
+    observation = env.reset()
     prev_obs = []
     for _ in range(goal_steps):
         env.render()
-        if len(prev_obs) == 0:
-            action = random.randrange(0,2)
-        else:
-            action = GA_model_predict(prev_obs, weights)
-        choices.append(action)
-        new_observation, reward, done, info = env.step(action)
-        prev_obs = new_observation
+        action = GA_model_predict(observation, weights)
+        observation, reward, done, info = env.step(action)
         score += reward
         if done:
             break
     scores.append(score)
-print('Average Score Achieved:',sum(scores)/len(scores))
+print('Average Score:', sum(scores)/len(scores))
+
 env.close()
 
 
